@@ -1,12 +1,30 @@
-export interface WeatherData {
-  id: string;
+export interface LatitudeLongitude {
   lat: number;
   lon: number;
+}
+
+export interface WeatherData {
+  id: string;
+  loc: LatitudeLongitude;
   temp: number;
   description: string;
   icon: string;
   timestamp: number;
 }
+
+export interface Cache<T> {
+  get(key: string): T[] | null;
+  set(key: string, data: T[]): void;
+  clear(): void;
+}
+
+export type WeatherDataCache = Map<
+  string,
+  {
+    data: WeatherData[];
+    timestamp: number;
+  }
+>;
 
 export interface LocationPermission {
   granted: boolean;

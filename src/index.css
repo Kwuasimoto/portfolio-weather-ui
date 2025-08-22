@@ -1,0 +1,118 @@
+/* Base CSS file (globals.css, index.css, or main.css) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Additional base styles for perfect dvh support */
+@layer base {
+  /* Ensure consistent box-sizing across all elements */
+  *, 
+  *::before, 
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* Root elements setup for full viewport control */
+  html {
+    height: 100%;
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Modern browsers - handles mobile viewport changes */
+    width: 100%;
+    overflow-x: hidden; /* Prevent horizontal scrollbars */
+  }
+
+  body {
+    height: 100%;
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Primary */
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    /* Prevent iOS bounce/rubber band effect */
+    overscroll-behavior-y: none;
+    /* Smooth font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* App root containers */
+  #root, 
+  #app,
+  [data-reactroot] {
+    height: 100%;
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Primary */
+    width: 100%;
+    overflow: hidden; /* Prevent scrollbars at root level */
+    position: relative;
+  }
+
+  /* Mobile-specific optimizations */
+  @media screen and (max-width: 768px) {
+    html {
+      /* Prevent zoom on input focus (iOS Safari) */
+      -webkit-text-size-adjust: 100%;
+      /* Better touch scrolling */
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    body {
+      /* Prevent pull-to-refresh */
+      overscroll-behavior: none;
+      /* Fix iOS viewport height issues */
+      min-height: -webkit-fill-available;
+    }
+
+    #root, 
+    #app {
+      min-height: -webkit-fill-available;
+    }
+  }
+
+  /* Support query for browsers without dvh */
+  @supports not (height: 100dvh) {
+    html,
+    body,
+    #root,
+    #app {
+      height: 100vh;
+    }
+  }
+}
+
+/* Custom utility classes for dvh support */
+@layer utilities {
+  .h-dvh-safe {
+    height: 100vh; /* Fallback */
+    height: 100dvh;
+  }
+
+  .min-h-dvh-safe {
+    min-height: 100vh; /* Fallback */
+    min-height: 100dvh;
+  }
+
+  .max-h-dvh-safe {
+    max-height: 100vh; /* Fallback */
+    max-height: 100dvh;
+  }
+
+  /* Container that fills viewport perfectly */
+  .viewport-container {
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Scrollable content area within viewport */
+  .viewport-content {
+    height: 100vh;
+    height: 100dvh;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}

@@ -10,6 +10,9 @@
     "types": ["vite/client"],
     "noEmit": true,
     "isolatedModules": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "@types": ["./src/types.ts"],
       "@modals": ["./src/modals/index.ts"],

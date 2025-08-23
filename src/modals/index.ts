@@ -1,1 +1,1 @@
-export * from "./permissionModal";
+export * from "./permission-modal";

@@ -1,1 +1,1 @@
-export * from "./weatherOverlay";
+export * from "./weather-overlay";

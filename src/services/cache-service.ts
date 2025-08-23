@@ -1,6 +1,6 @@
 import { WeatherDataCache, Cache, WeatherData } from "@types";
 
-export class WeatherCache implements Cache<WeatherData> {
+class CacheService implements Cache<WeatherData> {
   private cache: WeatherDataCache = new Map();
   private readonly TTL = 10 * 60 * 1000; // 10 mins
 

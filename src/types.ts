@@ -1,3 +1,5 @@
+import { SetStoreFunction, Store } from "solid-js/store";
+
 export interface LatitudeLongitude {
   lat: number;
   lon: number;
@@ -44,12 +46,14 @@ export interface Position {
   y: number;
 }
 
-export interface PermissionModalProps {
+export type PermissionModalProps = {
   onAccept: () => void;
   onDecline: () => void;
-}
+};
 
-export interface WeatherOverlayProps {
-  weather: WeatherData;
-  position: Position;
-}
+export type WeatherOverlayProps = {
+  weather?: WeatherData;
+  position?: Position;
+};
+
+export type State<T> = [Store<T>, SetStoreFunction<T>];

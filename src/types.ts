@@ -1,13 +1,13 @@
 import { SetStoreFunction, Store } from "solid-js/store";
 
-export interface LatitudeLongitude {
+export interface LatLng {
   lat: number;
-  lon: number;
+  lng: number;
 }
 
 export interface WeatherData {
   id: string;
-  loc: LatitudeLongitude;
+  loc: LatLng;
   temp: number;
   description: string;
   icon: string;

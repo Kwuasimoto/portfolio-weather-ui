@@ -1,4 +1,4 @@
-import { LatLng, LocationPermission, MapBounds, State } from "@types";
+import { City, LatLng, LocationPermission, MapBounds, State } from "@types";
 import { appService } from "@services";
 import { createStore } from "solid-js/store";
 
@@ -13,7 +13,7 @@ class LocationService {
   private readonly bounds: State<MapBounds>;
   private readonly latLng: State<LatLng>;
 
-  constructor() {
+  private constructor() {
     // Check if perms exists in local storage
     this.perms = createStore(this.readPerms());
     this.bounds = createStore(this.readBounds());
@@ -228,6 +228,44 @@ class LocationService {
       ...prev,
       ...leafMap.getBounds().getCenter(),
     }));
+  }
+
+  private async fetchCitiesByViewbox(): Promise<City[]> {
+    const bounds = this.bounds[0];
+    const viewbox = `${bounds.west},${bounds.north},${bounds.east},${bounds.south}`;
+    const placeTypes = ["city"];
+    const allResults: City[] = [];
+
+    try {
+      for (const place of placeTypes) {
+        const url =
+          `https://nominatim.openstreetmap.org/search` +
+          `?q=${place}` + // Search for cities, towns, villages
+          `&viewbox=${viewbox}` +
+          `&bounded=1` + // Strictly limit to viewbox
+          `&limit=3` + // Max results
+          `&format=json` +
+          `&addressdetails=1`;
+        const response = await fetch(url);
+        const cities: City[] = await response.json();
+
+        allResults.push(...cities);
+      }
+    } catch (e) {
+      console.error("Failed to fetch cities", e);
+    }
+
+    return allResults;
+  }
+
+  async getNearbyCities() {
+    try {
+      const cities = await this.fetchCitiesByViewbox();
+      console.log("Parsed cities by bounds", cities);
+    } catch (e) {
+      console.error("Failed to fetch cities", e);
+      return [];
+    }
   }
 }
 

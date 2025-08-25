@@ -6,7 +6,6 @@ export default defineConfig({
   plugins: [solidPlugin(), vitePaths()],
   server: {
     port: 3000,
-    host: "127.0.0.1",
   },
   build: {
     target: "esnext",

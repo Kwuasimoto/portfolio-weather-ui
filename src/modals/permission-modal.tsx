@@ -1,5 +1,9 @@
-import { PermissionModalProps } from "@types";
 import { Component } from "solid-js";
+
+export type PermissionModalProps = {
+  onAccept: () => void;
+  onDecline: () => void;
+};
 
 export const PermissionModal: Component<PermissionModalProps> = ({
   onAccept,

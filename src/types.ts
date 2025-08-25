@@ -1,18 +1,7 @@
+import { Icons } from "src/components/weather-layer";
 import { SetStoreFunction, Store } from "solid-js/store";
 
-export interface LatLng {
-  lat: number;
-  lng: number;
-}
-
-export interface WeatherData {
-  id: string;
-  loc: LatLng;
-  temp: number;
-  description: string;
-  icon: string;
-  timestamp: number;
-}
+export type State<T> = [Store<T>, SetStoreFunction<T>];
 
 export interface Cache<T> {
   get(key: string): T[] | null;
@@ -20,13 +9,10 @@ export interface Cache<T> {
   clear(): void;
 }
 
-export type WeatherDataCache = Map<
-  string,
-  {
-    data: WeatherData[];
-    timestamp: number;
-  }
->;
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
 
 export interface LocationPermission {
   granted: boolean;
@@ -46,14 +32,32 @@ export interface Position {
   y: number;
 }
 
-export type PermissionModalProps = {
-  onAccept: () => void;
-  onDecline: () => void;
-};
+export interface City {
+  place_id: number;
+  lat: string;
+  lon: string;
+  display_name: string;
+  type: "city" | "town" | "village";
+  importance: number;
+  boundingbox: [string, string, string, string]; // [minlat, maxlat, minlon, maxlon]
+}
 
-export type WeatherOverlayProps = {
-  weather?: WeatherData;
-  position?: Position;
-};
+export interface WeatherData {
+  id: string;
+  loc: LatLng;
+  temperature: number;
+  condition: Icons;
+  location: string;
+  humidity?: number;
+  windSpeed?: number;
+  description?: string;
+  timestamp: number;
+}
 
-export type State<T> = [Store<T>, SetStoreFunction<T>];
+export type WeatherDataCache = Map<
+  string,
+  {
+    data: WeatherData[];
+    timestamp: number;
+  }
+>;

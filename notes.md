@@ -1,15 +1,8 @@
-# SVG Considerations
+# Program Flow
 
-BoundingBox:
-
-- Size
-- Position
-- +zoom (our property)
-
-Zoom = 14 (Highest zoom, cities + towns + villages)
-Zoom = 13 (Do nothing)
-Zoom = 12 (Do nothing)
-Zoom = 11 (Remove villages icons, increase SVG Viewbox to 300, 300)
-Zoom = 10 (Do nothing)
-Zoom = 9 (Do nothing)
-Zoom = 8 (Remove towns, increase SVG Viewbox to 400, 400)
+1. Load map.
+2. Get bounds from loaded map.
+3. Fetch cities/towns/villages within bounds.
+4. Fetch weather for each city/town/village within bounds using latLng.
+5. Use SVG Factory to build icons.
+6. Display.

@@ -1,11 +1,17 @@
 import { Map } from "@components";
 import { PermissionModal } from "@modals";
-import { locationService } from "@services";
-import { createSignal } from "solid-js";
-import { Icons, MapIcon } from "@icons";
+import { locationService, svgService } from "@services";
+import { createSignal, onMount } from "solid-js";
 
 export default function Home() {
   const [count, setCount] = createSignal(0);
+  const [testIcon, setTestIcon] = createSignal<SVGSVGElement>();
+
+  onMount(async () => {
+    const icon = await svgService.lazyLoadWeatherIcon(1000, 0);
+    if (!icon) return;
+    setTestIcon(icon);
+  });
 
   return (
     <section class="relative">
@@ -13,11 +19,11 @@ export default function Home() {
         <text>Kwuasi Map Header</text>
         <button
           class="ml-2 rounded-sm bg-slate-900 px-4 py-2 text-white"
-          onclick={async () => await locationService.getNearbyCities()}
+          onclick={async () => await locationService.getNearbySettlements()}
         >
           Fetch
         </button>
-        <div>{/* <MapIcon iconId={Icons.SUN_CLEAR} /> */}</div>
+        {/* <div>{testIcon()}</div> */}
       </section>
 
       {!locationService.hasRequested() && (

@@ -1,6 +1,18 @@
-import { City, LatLng, LocationPermission, MapBounds, State } from "@types";
-import { appService } from "@services";
+import {
+  LatLng,
+  LocationPermission,
+  MapBounds,
+  State,
+  SettlementRaw,
+  Settlement,
+  SettlementAddressRaw,
+  SettlementAddress,
+} from "@types";
 import { createStore } from "solid-js/store";
+import { appService, storageService } from "@services";
+import { Defaults } from "@enums";
+
+import L from "leaflet";
 
 class LocationService {
   private static instance: LocationService;
@@ -12,6 +24,8 @@ class LocationService {
   private readonly perms: State<LocationPermission>;
   private readonly bounds: State<MapBounds>;
   private readonly latLng: State<LatLng>;
+
+  readonly defaultZoom: number = Defaults.ZOOM_MAX;
 
   private constructor() {
     // Check if perms exists in local storage
@@ -162,19 +176,20 @@ class LocationService {
   }
 
   // Prob worth moving local storage related code to a persistence service.
-
   private readPerms(): LocationPermission {
-    const existingPermsSerialized = localStorage.getItem(this.permsKey);
-    if (!existingPermsSerialized) {
+    const existingPerms = storageService.read<LocationPermission>(
+      this.permsKey,
+    );
+    if (!existingPerms) {
       return {
         granted: false,
         requested: false,
       };
     }
-    return JSON.parse(existingPermsSerialized);
+    return existingPerms;
   }
   private writePerms() {
-    localStorage.setItem(this.permsKey, JSON.stringify(this.perms[0]));
+    storageService.write(this.permsKey, this.perms[0]);
   }
 
   private readBounds(): MapBounds {
@@ -185,13 +200,13 @@ class LocationService {
         south: 5.505,
         east: -0.09,
         west: -1.09,
-        zoom: 13,
+        zoom: this.defaultZoom,
       };
     }
     return JSON.parse(existingBoundsSerialized);
   }
   private writeBounds() {
-    localStorage.setItem(this.boundsKey, JSON.stringify(this.bounds[0]));
+    storageService.write(this.boundsKey, this.bounds[0]);
   }
   setBounds(leafMap: L.Map) {
     console.log("Bounds adjusted.");
@@ -219,9 +234,8 @@ class LocationService {
     return JSON.parse(existingLatLngSerialized);
   }
   private writeLatLng() {
-    localStorage.setItem(this.latLonKey, JSON.stringify(this.latLng[0]));
+    storageService.write(this.latLonKey, this.latLng[0]);
   }
-
   setLatLng(leafMap: L.Map) {
     console.log("LatLng adjusted.");
     this.latLng[1]((prev) => ({
@@ -230,43 +244,82 @@ class LocationService {
     }));
   }
 
-  private async fetchCitiesByViewbox(): Promise<City[]> {
+  private async fetchSettlementsWithinViewbox(): Promise<SettlementRaw[]> {
     const bounds = this.bounds[0];
     const viewbox = `${bounds.west},${bounds.north},${bounds.east},${bounds.south}`;
-    const placeTypes = ["city"];
-    const allResults: City[] = [];
 
-    try {
-      for (const place of placeTypes) {
+    const settlementTypes = ["city"];
+    const settlements: SettlementRaw[] = [];
+
+    for (const settlement of settlementTypes) {
+      try {
         const url =
           `https://nominatim.openstreetmap.org/search` +
-          `?q=${place}` + // Search for cities, towns, villages
+          `?q=${settlement}` + // Search for cities, towns, villages
           `&viewbox=${viewbox}` +
           `&bounded=1` + // Strictly limit to viewbox
-          `&limit=3` + // Max results
           `&format=json` +
           `&addressdetails=1`;
-        const response = await fetch(url);
-        const cities: City[] = await response.json();
 
-        allResults.push(...cities);
+        const response = await fetch(url);
+        const result: SettlementRaw[] = await response.json();
+
+        settlements.push(...result);
+      } catch (e) {
+        console.error(`Failed to fetch ${settlement} information`, e);
       }
-    } catch (e) {
-      console.error("Failed to fetch cities", e);
     }
 
-    return allResults;
+    return settlements;
   }
 
-  async getNearbyCities() {
+  async getNearbySettlements(): Promise<Settlement[]> {
     try {
-      const cities = await this.fetchCitiesByViewbox();
-      console.log("Parsed cities by bounds", cities);
+      const settlements = await this.fetchSettlementsWithinViewbox();
+      return settlements.map(this.parseSettlementRaw);
     } catch (e) {
-      console.error("Failed to fetch cities", e);
+      console.error("Failed to parse cities", e);
       return [];
     }
   }
+
+  private readonly parseSettlementRaw = (
+    settlementRaw: SettlementRaw,
+  ): Settlement => {
+    return {
+      address: this.parseSettlementAddressRaw(settlementRaw.address),
+      bounds: L.latLngBounds(
+        [
+          Number.parseFloat(settlementRaw.boundingbox[0]),
+          Number.parseFloat(settlementRaw.boundingbox[2]),
+        ],
+        [
+          Number.parseFloat(settlementRaw.boundingbox[1]),
+          Number.parseFloat(settlementRaw.boundingbox[3]),
+        ],
+      ),
+      class: settlementRaw.class,
+      importance: settlementRaw.importance,
+      lat: Number.parseFloat(settlementRaw.lat),
+      lng: Number.parseFloat(settlementRaw.lng),
+      liscense: settlementRaw.liscense,
+      name: settlementRaw.name,
+      placeId: settlementRaw.place_id,
+      type: settlementRaw.type,
+    };
+  };
+
+  private readonly parseSettlementAddressRaw = (
+    settlementAddressRaw: SettlementAddressRaw,
+  ): SettlementAddress => {
+    return {
+      "ISO3166-2-lvl4": settlementAddressRaw["ISO3166-2-lvl4"],
+      country: settlementAddressRaw.country,
+      countryCode: settlementAddressRaw.country_code,
+      state: settlementAddressRaw.state,
+      stateDistrict: settlementAddressRaw.state_district,
+    };
+  };
 }
 
 export const locationService = LocationService.getInstance();

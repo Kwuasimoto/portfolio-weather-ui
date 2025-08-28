@@ -16,11 +16,14 @@
     "baseUrl": ".",
     "paths": {
       "@types": ["./src/types.ts"],
+      "@enums": ["./src/enums.ts"],
       "@components": ["./src/components/index.ts"],
       "@modals": ["./src/modals/index.ts"],
       "@overlays": ["./src/overlays/index.ts"],
       "@services": ["./src/services/index.ts"],
-      "@icons": ["src/components/weather-layer.tsx"]
+      "@svgs": ["./src/svgs/index.ts"],
+      "@svgs/*": ["./src/svgs/*"],
+      "@util": ["./src/util/index.ts"]
     }
   }
 }

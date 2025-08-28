@@ -24,9 +24,14 @@ export const Map: Component = () => {
         locationService.onDragEnd(leafMap);
       });
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors",
-      }).addTo(leafMap);
+      const tileLayer = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: "© OpenStreetMap contributors",
+        },
+      );
+
+      tileLayer.addTo(leafMap);
     }
   });
 

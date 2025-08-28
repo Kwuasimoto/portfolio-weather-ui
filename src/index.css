@@ -48,6 +48,13 @@
     user-select: none; /* Also prevents text selection */
   }
 
+  .leaflet-marker-icon .leaflet-div-icon,
+  .leaflet-tooltip {
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .weather-icon-map-mode {
     pointer-events: auto;
     cursor: pointer;

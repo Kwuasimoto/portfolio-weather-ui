@@ -7,8 +7,7 @@ class SVGService {
   private static instance: SVGService;
 
   private readonly svgOverlayMap: Map<string, L.SVGOverlay> = new Map();
-  private readonly originalBoundsDeltas: Map<string, [number, number]> =
-    new Map();
+  private readonly originalCentersMap: Map<string, L.LatLng> = new Map();
 
   private readonly zoomMax: number = Defaults.ZOOM_MAX;
   private readonly parser: DOMParser = new DOMParser();
@@ -71,15 +70,10 @@ class SVGService {
       console.log("No element found on SVGOverlay, can't add to memory");
       return this;
     }
+
     if (!this.svgOverlayMap.has(element.id))
       this.svgOverlayMap.set(element.id, svgOverlay);
-    if (!this.originalBoundsDeltas.has(element.id)) {
-      const bounds = svgOverlay.getBounds();
-      this.originalBoundsDeltas.set(element.id, [
-        bounds.getNorth() - bounds.getSouth(),
-        bounds.getEast() - bounds.getWest(),
-      ]);
-    }
+
     return this;
   }
 
@@ -99,36 +93,6 @@ class SVGService {
     }
     this.svgOverlayMap.delete(element.id);
     return this;
-  }
-
-  public onZoomEnd(map: L.Map) {
-    const currentZoom = map.getZoom();
-
-    const zoomDifference = currentZoom - this.zoomMax;
-
-    const scaleFactor = Math.pow(1.2, -zoomDifference);
-
-    console.log("SCALE FACTOR", scaleFactor);
-
-    for (const [id, svgOverlay] of this.svgOverlayMap.entries()) {
-      const deltas = this.originalBoundsDeltas.get(id);
-      if (!deltas) continue;
-
-      console.log(`Adjusting bounds for: ${id}`, currentZoom);
-      const bounds = svgOverlay.getBounds();
-      const [latDiff, lngDiff] = deltas;
-
-      const center = bounds.getCenter();
-      const newLatDiff = latDiff * scaleFactor;
-      const newLngDiff = lngDiff * scaleFactor;
-
-      const newBounds = L.latLngBounds([
-        [center.lat - newLatDiff / 2, center.lng - newLngDiff / 2],
-        [center.lat + newLatDiff / 2, center.lng + newLngDiff / 2],
-      ]);
-
-      svgOverlay.setBounds(newBounds);
-    }
   }
 
   private parseRawSVGString(data: string | typeof import("?raw")) {
@@ -207,24 +171,63 @@ class SVGService {
     );
   }
 
-  public createSmallBounds(center: L.LatLng, zoom: number) {
+  public onZoomEnd(map: L.Map) {
+    const zoom = map.getZoom();
+
+    const sizeFactor = 0.02;
+    const offsetLatFactor = 0.01;
+
+    const zoomDelta = this.zoomMax - zoom + 1;
+    console.log("ZOOM_DELTA", zoomDelta);
+
+    const size = sizeFactor * zoomDelta;
+    const northOffset = offsetLatFactor * zoomDelta;
+
+    console.log("SIZE_DEGREES", size);
+    console.log("OFFSET_LAT", northOffset);
+
+    for (const [id, svgOverlay] of this.svgOverlayMap.entries()) {
+      const initialBounds = this.originalCentersMap.get(id);
+
+      if (!initialBounds) {
+        console.error("Failed to find initial bounds", svgOverlay);
+        return;
+      }
+
+      const bounds = L.latLngBounds(
+        [
+          initialBounds.lat + northOffset - size / 2,
+          initialBounds.lng - size / 2,
+        ], // NW
+        [initialBounds.lat + size / 2, initialBounds.lng + size / 2], // SE
+      );
+
+      svgOverlay.setBounds(bounds);
+    }
+  }
+
+  public createInitialBounds(svgId: string, center: L.LatLng, zoom: number) {
+    this.originalCentersMap.set(svgId, center);
+
     // create an offset
     const sizeFactor = 0.02;
-    const offsetLatFactor = 0.0075;
+    const offsetLatFactor = 0.01;
 
-    const zoomMaxDelta = this.zoomMax - zoom + 1;
-    console.log("ZOOM_DELTA", zoomMaxDelta);
+    const zoomDelta = this.zoomMax - zoom + 1;
+    console.log("ZOOM_DELTA", zoomDelta);
 
-    const sizeDegrees = sizeFactor * zoomMaxDelta;
-    const offsetLat = offsetLatFactor * zoomMaxDelta;
+    const size = sizeFactor * zoomDelta;
+    const northOffset = offsetLatFactor * zoomDelta;
 
-    console.log("SIZE_DEGREES", sizeDegrees);
-    console.log("OFFSET_LAT", offsetLat);
+    console.log("SIZE_DEGREES", size);
+    console.log("OFFSET_LAT", northOffset);
 
-    return L.latLngBounds(
-      [center.lat + offsetLat - sizeDegrees / 2, center.lng - sizeDegrees / 2], // NW
-      [center.lat + sizeDegrees / 2, center.lng + sizeDegrees / 2], // SE
+    const bounds = L.latLngBounds(
+      [center.lat + northOffset - size / 2, center.lng - size / 2], // NW
+      [center.lat + size / 2, center.lng + size / 2], // SE
     );
+
+    return bounds;
   }
 }
 

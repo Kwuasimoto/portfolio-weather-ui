@@ -21,6 +21,12 @@ export const WeatherOverlay: Component = () => {
         svgService.onZoomEnd(map);
       });
 
+      const labelElements = document.querySelectorAll(
+        ".leaflet-marker-icon, .leaflet-tooltip",
+      );
+
+      console.log("ELEMENTS", labelElements);
+
       //Fetch settlements,
       //TODO: Should be moved to a CityOverlay eventually.
       const settlements = await locationService.getNearbySettlements();
@@ -50,25 +56,27 @@ export const WeatherOverlay: Component = () => {
         const settlementCenter = settlementBounds.getCenter();
         const zoom = map.getZoom();
 
-        const boundsMod = svgService.createSmallBounds(settlementCenter, zoom);
+        const initialBounds = svgService.createInitialBounds(
+          icon.svg.id,
+          settlementCenter,
+          zoom,
+        );
 
         console.log(`Adding overlay ${index + 1}:`, {
           center: settlementCenter,
-          bounds: boundsMod,
+          bounds: initialBounds,
           weatherData: icon.weatherData,
         });
 
-        const svgOverlay = L.svgOverlay(icon.svg, boundsMod);
-        svgService.addSVGOverlay(svgOverlay, icon.svg);
+        const svgOverlay = L.svgOverlay(icon.svg, initialBounds);
 
+        svgService.addSVGOverlay(svgOverlay, icon.svg);
         svgOverlay.addTo(map);
+
         console.log(`Successfully added overlay ${index + 1} to map`);
       });
     }
   });
-
-  // Edit visible icons based on updated bounds (zoomend + dragend)
-  // createEffect();
 
   return <></>;
   // Renders empty HTML. This element listens for changes in mapService.map and adjusts weather icons accordingly.

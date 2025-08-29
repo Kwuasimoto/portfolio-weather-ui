@@ -1,7 +1,7 @@
 import { Defaults } from "@enums";
-import { ContrastConfig, RealtimeWeather } from "@types";
 import { SVGContrastBooster } from "@util";
 import L from "leaflet";
+import { MapFeature } from "src/wrappers";
 
 class SVGService {
   private static instance: SVGService;
@@ -23,8 +23,6 @@ class SVGService {
     eager: true,
   });
 
-  private readonly contrastBooser = new SVGContrastBooster();
-
   private constructor() {
     this.preloadAllSVGs();
   }
@@ -36,9 +34,6 @@ class SVGService {
         const svg = this.parseRawSVGString(svgRaw);
 
         if (svg) {
-          // const boostedSVG = this.contrastBooser.boostSVGContrast(svg);
-          // console.log("BoostedSVG", boostedSVG);
-
           const filename = path.split("/").pop()?.replace(".svg", "");
           svg.setAttribute("id", filename || "unknown");
           this.setSVG(svg);
@@ -64,15 +59,14 @@ class SVGService {
     return this.svgOverlayMap.get(svgElement.id);
   }
 
-  public addSVGOverlay(svgOverlay: L.SVGOverlay, svgElement?: SVGElement) {
-    const element = svgOverlay.getElement() ?? svgElement;
-    if (!element) {
-      console.log("No element found on SVGOverlay, can't add to memory");
-      return this;
-    }
+  public addSVGOverlay(mapFeature: MapFeature) {
+    const element = mapFeature.getSVG();
+    const settlement = mapFeature.getSettlement();
 
-    if (!this.svgOverlayMap.has(element.id))
-      this.svgOverlayMap.set(element.id, svgOverlay);
+    const id = `${settlement.name.toLocaleLowerCase()}_${element.id}`;
+
+    if (!this.svgOverlayMap.has(id))
+      this.svgOverlayMap.set(id, mapFeature.getSVGOverlay());
 
     return this;
   }
@@ -143,10 +137,10 @@ class SVGService {
     return <SVGSVGElement>this.svgMap.get(path)!.cloneNode(true);
   }
 
-  public getWeatherIcon(weatherData: RealtimeWeather) {
-    const id = `${weatherData.conditionCode}_${weatherData.isDay}`;
+  public getWeatherIcon(mapFeature: MapFeature) {
+    const weather = mapFeature.getWeather();
 
-    console.log(this.svgMap);
+    const id = `${weather.conditionCode}_${weather.isDay}`;
 
     if (!this.svgMap.has(id)) {
       throw new Error(`SVG Icon for id ${id} was not preloaded properly.`);
@@ -156,18 +150,14 @@ class SVGService {
     if (!svg) {
       throw new Error(`Preloaded svg for id ${id} is undefined.`);
     }
-
-    return { svg: <SVGSVGElement>svg.cloneNode(true), weatherData };
+    const clone = <SVGSVGElement>svg.cloneNode(true);
+    mapFeature.setSVG(clone);
+    return mapFeature;
   }
 
-  public async getWeatherIcons(realtimeWeatherArr: RealtimeWeather[]) {
-    return Promise.all(
-      realtimeWeatherArr.map((realtimeWeather) =>
-        svgService.lazyLoadWeatherIcon(
-          realtimeWeather.conditionCode,
-          realtimeWeather.isDay,
-        ),
-      ),
+  public getWeatherIcons(mapFeatures: MapFeature[]) {
+    return mapFeatures.map((mapFeature) =>
+      svgService.getWeatherIcon(mapFeature),
     );
   }
 
@@ -178,13 +168,9 @@ class SVGService {
     const offsetLatFactor = 0.01;
 
     const zoomDelta = this.zoomMax - zoom + 1;
-    console.log("ZOOM_DELTA", zoomDelta);
 
-    const size = sizeFactor * zoomDelta;
-    const northOffset = offsetLatFactor * zoomDelta;
-
-    console.log("SIZE_DEGREES", size);
-    console.log("OFFSET_LAT", northOffset);
+    const size = sizeFactor * zoomDelta ** 1.2;
+    const northOffset = offsetLatFactor * (zoomDelta - 0.1) ** 1.175;
 
     for (const [id, svgOverlay] of this.svgOverlayMap.entries()) {
       const initialBounds = this.originalCentersMap.get(id);
@@ -206,21 +192,21 @@ class SVGService {
     }
   }
 
-  public createInitialBounds(svgId: string, center: L.LatLng, zoom: number) {
-    this.originalCentersMap.set(svgId, center);
+  public createInitialBounds(mapFeature: MapFeature) {
+    const settlement = mapFeature.getSettlement();
+    const zoom = mapFeature.getMap().getZoom();
+
+    const center = settlement.bounds.getCenter();
+    this.originalCentersMap.set(mapFeature.getId(), center);
 
     // create an offset
     const sizeFactor = 0.02;
     const offsetLatFactor = 0.01;
 
     const zoomDelta = this.zoomMax - zoom + 1;
-    console.log("ZOOM_DELTA", zoomDelta);
 
-    const size = sizeFactor * zoomDelta;
-    const northOffset = offsetLatFactor * zoomDelta;
-
-    console.log("SIZE_DEGREES", size);
-    console.log("OFFSET_LAT", northOffset);
+    const size = sizeFactor * zoomDelta ** 1.2;
+    const northOffset = offsetLatFactor * (zoomDelta - 0.1) ** 1.175;
 
     const bounds = L.latLngBounds(
       [center.lat + northOffset - size / 2, center.lng - size / 2], // NW

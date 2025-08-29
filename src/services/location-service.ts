@@ -13,6 +13,7 @@ import { appService, storageService } from "@services";
 import { Defaults } from "@enums";
 
 import L from "leaflet";
+import { MapFeature } from "src/wrappers";
 
 class LocationService {
   private static instance: LocationService;
@@ -87,8 +88,6 @@ class LocationService {
   }
 
   private readonly onGeoLocSuccess = (geoLoc: GeolocationPosition) => {
-    console.log("Successfully fetched geolocation", geoLoc);
-
     this.perms[1](() => ({
       granted: true,
       requested: true,
@@ -134,10 +133,10 @@ class LocationService {
   };
 
   private readonly debugGeoLocError = (geoLocErr: GeolocationPositionError) => {
-    console.log("Navigator exists:", !!navigator);
-    console.log("Geolocation exists:", !!navigator.geolocation);
-    console.log("User agent:", navigator.userAgent);
-    console.log(
+    console.error("Navigator exists:", !!navigator);
+    console.error("Geolocation exists:", !!navigator.geolocation);
+    console.error("User agent:", navigator.userAgent);
+    console.error(
       "ERROR CODE:",
       geoLocErr.code,
       "MESSAGE:",
@@ -150,7 +149,7 @@ class LocationService {
 
   onZoomEnd(leafMap?: L.Map) {
     if (!leafMap) {
-      console.log(
+      console.error(
         "Leafmap error: unable to get map information because it's undefined.",
       );
       return;
@@ -165,7 +164,7 @@ class LocationService {
 
   onDragEnd(leafMap?: L.Map) {
     if (!leafMap) {
-      console.log(
+      console.error(
         "Leafmap error: unable to get map information because it's undefined.",
       );
       return;
@@ -273,7 +272,7 @@ class LocationService {
     return settlements;
   }
 
-  async getNearbySettlements(): Promise<Settlement[]> {
+  async getNearbySettlements(): Promise<MapFeature[]> {
     try {
       const settlements = await this.fetchSettlementsWithinViewbox();
       return settlements.map(this.parseSettlementRaw);
@@ -285,8 +284,9 @@ class LocationService {
 
   private readonly parseSettlementRaw = (
     settlementRaw: SettlementRaw,
-  ): Settlement => {
-    return {
+  ): MapFeature => {
+    const mapFeature = new MapFeature();
+    mapFeature.setSettlement({
       address: this.parseSettlementAddressRaw(settlementRaw.address),
       bounds: L.latLngBounds(
         [
@@ -306,7 +306,8 @@ class LocationService {
       name: settlementRaw.name,
       placeId: settlementRaw.place_id,
       type: settlementRaw.type,
-    };
+    });
+    return mapFeature;
   };
 
   private readonly parseSettlementAddressRaw = (

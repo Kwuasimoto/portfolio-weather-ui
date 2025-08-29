@@ -143,7 +143,6 @@ export type RealtimeWeather = {
   windMPH: number;
   windKPH: number;
   isDay: number;
-  settlementBounds: L.LatLngBounds;
 } & Omit<
   RealtimeWeatherRaw,
   | "last_updated"

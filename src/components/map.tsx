@@ -9,15 +9,12 @@ export const Map: Component = () => {
   let leafMap: L.Map | undefined;
 
   onMount(() => {
-    console.log("Rendering...");
     if (mapRef) {
       leafMap = L.map(mapRef);
       mapService.setMap(leafMap);
 
       leafMap.addEventListener("zoomend", () => {
         locationService.onZoomEnd(leafMap);
-        // svgService.onZoomEnd(leafMap!);
-        if (leafMap) console.log("Zoom", leafMap.getZoom());
       });
 
       leafMap.addEventListener("dragend", () => {

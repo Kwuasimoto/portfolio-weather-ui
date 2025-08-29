@@ -6,13 +6,11 @@ import {
   svgService,
   weatherService,
 } from "@services";
-import { Component, createSignal, onMount, Show } from "solid-js";
+import { Component, onMount } from "solid-js";
 
 import L from "leaflet";
 
 export const WeatherOverlay: Component = () => {
-  const [testIcon, setTestIcon] = createSignal<SVGSVGElement>();
-
   // Initial load, get all weather icons for current bounts.
   onMount(async () => {
     const map = mapService.getMap();
@@ -21,59 +19,44 @@ export const WeatherOverlay: Component = () => {
         svgService.onZoomEnd(map);
       });
 
-      const labelElements = document.querySelectorAll(
-        ".leaflet-marker-icon, .leaflet-tooltip",
-      );
-
-      console.log("ELEMENTS", labelElements);
-
       //Fetch settlements,
       //TODO: Should be moved to a CityOverlay eventually.
-      const settlements = await locationService.getNearbySettlements();
-      console.log(`Found ${settlements.length} settlements:`, settlements);
+      //TODO: Features should be built before this function, idk how we determine how many to build tho.
+      const mapFeatures = await locationService.getNearbySettlements();
 
-      // If no settlements are found, something went wrong.
-      if (settlements.length <= 0) {
-        console.log(
-          "WeatherOverlay failed to find any nearby settlements (URGENT FIX REQUIRED)",
-        );
-      }
+      // Set map to the generated features.
+      mapFeatures.forEach((mapFeature) => mapFeature.setMap(map));
 
-      // Get weather data for settlements by their bounds
-      const realtimeWeatherArr =
-        await weatherService.getRealtimeWeatherForSettlements(settlements);
-      console.log(
-        `Got weather data for ${realtimeWeatherArr.length} settlements:`,
-        realtimeWeatherArr,
-      );
+      // Get weather data for settlements by their bounds.
+      await weatherService.getRealtimeWeatherForSettlements(mapFeatures);
 
-      const icons = realtimeWeatherArr.map((realtimeWeather) =>
-        svgService.getWeatherIcon(realtimeWeather),
-      );
+      // Get icons from memory.
+      svgService.getWeatherIcons(mapFeatures);
 
-      icons.forEach((icon, index) => {
-        const settlementBounds = icon.weatherData.settlementBounds;
+      // loop mapFeatures to SVG Overlays and add to map.
+      mapFeatures.forEach((mapFeature, index) => {
+        const svg = mapFeature.getSVG();
+        const weather = mapFeature.getWeather();
+        const settlement = mapFeature.getSettlement();
+
+        const settlementBounds = settlement.bounds;
         const settlementCenter = settlementBounds.getCenter();
-        const zoom = map.getZoom();
 
-        const initialBounds = svgService.createInitialBounds(
-          icon.svg.id,
-          settlementCenter,
-          zoom,
-        );
+        const initialBounds = svgService.createInitialBounds(mapFeature);
 
         console.log(`Adding overlay ${index + 1}:`, {
           center: settlementCenter,
           bounds: initialBounds,
-          weatherData: icon.weatherData,
+          weatherData: weather,
         });
 
-        const svgOverlay = L.svgOverlay(icon.svg, initialBounds);
+        const svgOverlay = L.svgOverlay(svg, initialBounds);
+        mapFeature.setSVGOverlay(svgOverlay);
 
-        svgService.addSVGOverlay(svgOverlay, icon.svg);
+        svgService.addSVGOverlay(mapFeature);
         svgOverlay.addTo(map);
 
-        console.log(`Successfully added overlay ${index + 1} to map`);
+        console.log("Successfully added feature", mapFeature.json());
       });
     }
   });

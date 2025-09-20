@@ -81,9 +81,9 @@ export const WeatherTooltip: Component = () => {
     setWindUnit((prev) => (prev === "mph" ? "kmh" : "mph"));
   };
 
-  const formatLastUpdated = (lastUpdated: string | undefined) => {
-    if (!lastUpdated) return "Unknown";
-    const date = new Date(lastUpdated);
+  const formatLastUpdated = (lastUpdatedEpoch: number | undefined) => {
+    if (!lastUpdatedEpoch) return "Unknown";
+    const date = new Date(lastUpdatedEpoch * 1000); // Convert epoch seconds to milliseconds
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
@@ -144,7 +144,7 @@ export const WeatherTooltip: Component = () => {
                     {weatherData()?.condition}
                   </span>
                   <span class="text-xs text-muted-foreground">
-                    Updated: {formatLastUpdated(weatherData()?.lastUpdated)}
+                    Updated: {formatLastUpdated(weatherData()?.lastUpdatedEpoch)}
                   </span>
                 </div>
               </div>

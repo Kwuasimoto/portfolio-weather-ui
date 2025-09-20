@@ -33,7 +33,6 @@ class LocationService {
     const cachedBounds = this.readBounds();
     const cachedLatLng = this.readLatLng();
 
-    console.log("CACHED", cachedPerms, cachedBounds, cachedLatLng);
 
     this.perms = createStore(cachedPerms);
     this.bounds = createStore(cachedBounds);
@@ -90,6 +89,26 @@ class LocationService {
 
   getLatLng() {
     return this.latLng[0];
+  }
+
+  getCurrentZoom() {
+    return this.bounds[0].zoom;
+  }
+
+  shouldFetchWeather() {
+    const zoom = this.getCurrentZoom();
+    const shouldFetch = zoom >= 8;
+    if (!shouldFetch) {
+      console.log(`Zoom level ${zoom} too low for weather fetching (minimum: 8)`);
+    }
+    return shouldFetch;
+  }
+
+  isCoordinateInViewport(lat: number, lng: number) {
+    const bounds = this.bounds[0];
+    const inBounds = lat >= bounds.south && lat <= bounds.north &&
+                    lng >= bounds.west && lng <= bounds.east;
+    return inBounds;
   }
 
   private readonly onGeoLocSuccess = (geoLoc: GeolocationPosition) => {
@@ -177,7 +196,9 @@ class LocationService {
       return;
     }
 
+    this.setBounds(leafMap); // Update bounds on drag as well
     this.setLatLng(leafMap);
+    this.writeBounds();
     this.writeLatLng();
   }
 
@@ -215,11 +236,14 @@ class LocationService {
     storageService.write(this.boundsKey, this.bounds[0]);
   }
   setBounds(leafMap: L.Map) {
-    console.log("Bounds adjusted.");
     const bounds = leafMap.getBounds();
     const zoom = leafMap.getZoom();
+    const prevZoom = this.bounds[0].zoom;
 
-    console.log(`Map bounds updated - Zoom: ${zoom}, North: ${bounds.getNorth().toFixed(4)}, South: ${bounds.getSouth().toFixed(4)}, East: ${bounds.getEast().toFixed(4)}, West: ${bounds.getWest().toFixed(4)}`);
+    // Only log significant zoom changes
+    if (Math.abs(zoom - prevZoom) >= 1) {
+      console.log(`Map zoom changed: ${prevZoom} → ${zoom}`);
+    }
 
     this.bounds[1]((prev) => ({
       ...prev,
@@ -245,7 +269,6 @@ class LocationService {
     storageService.write(this.latLngKey, this.latLng[0]);
   }
   setLatLng(leafMap: L.Map) {
-    console.log("LatLng adjusted.");
     this.latLng[1]((prev) => ({
       ...prev,
       ...leafMap.getBounds().getCenter(),

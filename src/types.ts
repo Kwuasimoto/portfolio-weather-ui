@@ -106,6 +106,7 @@ export interface RealtimeWeatherCurrentRaw {
 
 export interface RealtimeWeatherRaw {
   last_updated: string;
+  last_updated_epoch: number;
   temp_c: number;
   temp_f: number;
   dewpoint_c: number;
@@ -129,6 +130,7 @@ export interface RealtimeWeatherRaw {
 
 export type RealtimeWeather = {
   lastUpdated: string;
+  lastUpdatedEpoch: number;
   tempC: number;
   tempF: number;
   dewpointC: number;
@@ -151,6 +153,7 @@ export type RealtimeWeather = {
 } & Omit<
   RealtimeWeatherRaw,
   | "last_updated"
+  | "last_updated_epoch"
   | "temp_c"
   | "temp_f"
   | "dewpoint_c"

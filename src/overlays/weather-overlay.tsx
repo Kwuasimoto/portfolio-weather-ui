@@ -16,38 +16,28 @@ export const WeatherOverlay: Component = () => {
 
   // Initial load, get all weather icons for current bounds.
   onMount(async () => {
-    console.log("Running onMount");
+    console.log("Weather overlay initialized");
     const map = mapService.getMap();
     if (map) {
-      map.on("zoomend", () => {
-        // svgService.onZoomEnd(map);
+      // Set up automatic weather fetching on map events
+      map.on("zoomend", async () => {
+        locationService.onZoomEnd(map);
+        await featureService.autoFetchWeatherForCurrentBounds(map, setWeatherTooltipMapFeature);
       });
 
-      //Fetch settlements,
-      //TODO: Should be moved to a CityOverlay eventually.
-      //TODO: Features should be built before this function, idk how we determine how many to build tho.
-      const mapFeatures = await locationService.getNearbySettlements();
+      map.on("dragend", async () => {
+        locationService.onDragEnd(map);
+        await featureService.autoFetchWeatherForCurrentBounds(map, setWeatherTooltipMapFeature);
+      });
 
-      console.log(`onMount fetched ${mapFeatures.length} features`);
-
-      // Add generated features to service
-      featureService.addMany(mapFeatures);
-
-      // Set map to the generated features.
-      mapFeatures.forEach((mapFeature) => mapFeature.setMap(map!));
-
-      // Get weather data for settlements by their bounds.
-      await weatherService.getRealtimeWeatherForSettlements(mapFeatures);
-
-      // Create markers using centralized function
-      featureService.createMarkersOnMap(map, setWeatherTooltipMapFeature);
+      // Initial weather fetch for current bounds
+      await featureService.autoFetchWeatherForCurrentBounds(map, setWeatherTooltipMapFeature);
     }
     setMounted(true);
   });
 
   createEffect(() => {
     if (!mounted()) return;
-    console.log("Running createEffect");
     const map = mapService.getMap();
     if (map) {
       const features = featureService.getMapFeatures();
@@ -55,8 +45,6 @@ export const WeatherOverlay: Component = () => {
       if (features.length === 0) {
         return;
       }
-
-      console.log(`Updating markers for ${features.length} features`, features);
 
       // Use the same centralized function to create markers
       featureService.createMarkersOnMap(map, setWeatherTooltipMapFeature);

@@ -42,8 +42,6 @@ export class WeatherService {
       const response = await fetch(url);
       const result = await response.json();
 
-      console.log("Weather response", result);
-
       const weatherParsed = this.parseRealtimeWeatherRaw(result);
       mapFeature.setWeather(weatherParsed);
 
@@ -83,6 +81,7 @@ export class WeatherService {
       humidity: raw.current.humidity,
       isDay: raw.current.is_day,
       lastUpdated: raw.current.last_updated,
+      lastUpdatedEpoch: raw.current.last_updated_epoch,
       uv: raw.current.uv,
     };
   }

@@ -4,6 +4,7 @@ import { locationService, mapService, svgService } from "@services";
 import L from "leaflet";
 import { WeatherOverlay } from "@overlays";
 import { WeatherTooltip } from "./weather-tooltip";
+import { Watermark } from "./watermark";
 
 export const Map: Component = () => {
   let mapRef: HTMLDivElement | undefined;
@@ -13,14 +14,6 @@ export const Map: Component = () => {
     if (mapRef) {
       leafMap = L.map(mapRef);
       mapService.setMap(leafMap);
-
-      leafMap.addEventListener("zoomend", () => {
-        locationService.onZoomEnd(leafMap);
-      });
-
-      leafMap.addEventListener("dragend", () => {
-        locationService.onDragEnd(leafMap);
-      });
 
       const tileLayer = L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -56,6 +49,7 @@ export const Map: Component = () => {
       <div class="stretched z-0" ref={mapRef} />
       <WeatherTooltip />
       <WeatherOverlay />
+      <Watermark />
     </>
   );
 };

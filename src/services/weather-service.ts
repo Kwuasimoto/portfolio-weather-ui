@@ -7,12 +7,16 @@ import { MapFeature } from "src/wrappers";
 
 export class WeatherService {
   // move to .env before git commit
-  private readonly APIKEY: string = "161f5d1252354e828f7160158252208";
+  private readonly APIKEY: string = process.env.WEATHER_API || "";
   private readonly API: string = "http://api.weatherapi.com/v1";
 
   private static instance: WeatherService;
 
-  private constructor() {}
+  private constructor() {
+    if (this.APIKEY.length <= 0) {
+      throw new Error("Weather API empty, couldn't find ENV variable");
+    }
+  }
 
   public static getInstance() {
     if (!WeatherService.instance)

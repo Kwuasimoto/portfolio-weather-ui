@@ -7,7 +7,7 @@ import { MapFeature } from "src/wrappers";
 
 export class WeatherService {
   // move to .env before git commit
-  private readonly APIKEY: string = process.env.WEATHER_API || "";
+  private readonly APIKEY: string = import.meta.env.VITE_WEATHER_API || "";
   private readonly API: string = "http://api.weatherapi.com/v1";
 
   private static instance: WeatherService;
@@ -68,6 +68,8 @@ export class WeatherService {
 
       tempC: raw.current.temp_c,
       tempF: raw.current.temp_f,
+      dewpointC: raw.current.dewpoint_c,
+      dewpointF: raw.current.dewpoint_f,
       feelsLikeC: raw.current.feelslike_c,
       feelsLikeF: raw.current.feelslike_f,
       heatIndexC: raw.current.heatindex_c,
@@ -76,6 +78,8 @@ export class WeatherService {
       windChillF: raw.current.windchill_f,
       windKPH: raw.current.wind_kph,
       windMPH: raw.current.wind_mph,
+      windDegree: raw.current.wind_degree,
+      windDir: raw.current.wind_dir,
       humidity: raw.current.humidity,
       isDay: raw.current.is_day,
       lastUpdated: raw.current.last_updated,

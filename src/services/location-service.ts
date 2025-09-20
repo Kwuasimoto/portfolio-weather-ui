@@ -4,7 +4,6 @@ import {
   MapBounds,
   State,
   SettlementRaw,
-  Settlement,
   SettlementAddressRaw,
   SettlementAddress,
 } from "@types";
@@ -20,7 +19,7 @@ class LocationService {
 
   private readonly permsKey = "kwuasi-weather_perms";
   private readonly boundsKey = "kwuasi-weather_bounds";
-  private readonly latLonKey = "kwuasi-weather_latLon";
+  private readonly latLngKey = "kwuasi-weather_latLng";
 
   private readonly perms: State<LocationPermission>;
   private readonly bounds: State<MapBounds>;
@@ -30,9 +29,15 @@ class LocationService {
 
   private constructor() {
     // Check if perms exists in local storage
-    this.perms = createStore(this.readPerms());
-    this.bounds = createStore(this.readBounds());
-    this.latLng = createStore(this.readLatLng());
+    const cachedPerms = this.readPerms();
+    const cachedBounds = this.readBounds();
+    const cachedLatLng = this.readLatLng();
+
+    console.log("CACHED", cachedPerms, cachedBounds, cachedLatLng);
+
+    this.perms = createStore(cachedPerms);
+    this.bounds = createStore(cachedBounds);
+    this.latLng = createStore(cachedLatLng);
   }
   static getInstance() {
     if (!LocationService.instance)
@@ -88,28 +93,30 @@ class LocationService {
   }
 
   private readonly onGeoLocSuccess = (geoLoc: GeolocationPosition) => {
+    const { latitude, longitude } = geoLoc.coords;
+
     this.perms[1](() => ({
       granted: true,
       requested: true,
     }));
     this.bounds[1]((prev) => ({
       ...prev,
-      north: geoLoc.coords.latitude + 0.25,
-      south: geoLoc.coords.latitude - 0.25,
-      east: geoLoc.coords.longitude + 0.25,
-      west: geoLoc.coords.longitude - 0.25,
+      north: latitude + 0.25,
+      south: latitude - 0.25,
+      east: longitude + 0.25,
+      west: longitude - 0.25,
     }));
     this.latLng[1]((prev) => ({
       ...prev,
-      lat: geoLoc.coords.latitude,
-      lng: geoLoc.coords.longitude,
+      lat: latitude,
+      lng: longitude,
     }));
-
-    appService.setMapLoading(false);
 
     this.writePerms();
     this.writeBounds();
     this.writeLatLng();
+
+    appService.setMapLoading(false);
   };
 
   private readonly onGeoLocError = (geoLocErr: GeolocationPositionError) => {
@@ -125,11 +132,11 @@ class LocationService {
       lng: -79,
     }));
 
-    appService.setMapLoading(false);
-
     this.writePerms();
     this.writeBounds();
     this.writeLatLng();
+
+    appService.setMapLoading(false);
   };
 
   private readonly debugGeoLocError = (geoLocErr: GeolocationPositionError) => {
@@ -223,17 +230,17 @@ class LocationService {
   }
 
   private readLatLng() {
-    const existingLatLngSerialized = localStorage.getItem(this.latLonKey);
+    const existingLatLngSerialized = localStorage.getItem(this.latLngKey);
     if (!existingLatLngSerialized) {
       return {
         lat: 51.505 - 0.5,
-        lon: -0.09 - 0.5,
+        lng: -0.09 - 0.5,
       };
     }
     return JSON.parse(existingLatLngSerialized);
   }
   private writeLatLng() {
-    storageService.write(this.latLonKey, this.latLng[0]);
+    storageService.write(this.latLngKey, this.latLng[0]);
   }
   setLatLng(leafMap: L.Map) {
     console.log("LatLng adjusted.");

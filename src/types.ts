@@ -108,6 +108,8 @@ export interface RealtimeWeatherRaw {
   last_updated: string;
   temp_c: number;
   temp_f: number;
+  dewpoint_c: number;
+  dewpoint_f: number;
   feelslike_c: number;
   feelslike_f: number;
   windchill_c: number;
@@ -117,6 +119,8 @@ export interface RealtimeWeatherRaw {
   condition: RealtimeWeatherCurrentRaw;
   wind_mph: number;
   wind_kph: number;
+  wind_dir: string;
+  wind_degree: number;
   humidity: number;
   cloud: number;
   is_day: 0 | 1;
@@ -127,6 +131,10 @@ export type RealtimeWeather = {
   lastUpdated: string;
   tempC: number;
   tempF: number;
+
+  dewpointC: number;
+  dewpointF: number;
+
   feelsLikeC: number;
   feelsLikeF: number;
   windChillC: number;
@@ -137,17 +145,24 @@ export type RealtimeWeather = {
   condition: string;
   windMPH: number;
   windKPH: number;
+  windDir: string;
+  windDegree: number;
   isDay: number;
   icon: string; //CDN
+  uv: number;
 } & Omit<
   RealtimeWeatherRaw,
   | "last_updated"
   | "temp_c"
   | "temp_f"
+  | "dewpoint_c"
+  | "dewpoint_f"
   | "feelslike_c"
   | "feelslike_f"
   | "windchill_c"
   | "windchill_f"
+  | "wind_dir"
+  | "wind_degree"
   | "heatindex_c"
   | "heatindex_f"
   | "condition"

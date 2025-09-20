@@ -131,10 +131,8 @@ export type RealtimeWeather = {
   lastUpdated: string;
   tempC: number;
   tempF: number;
-
   dewpointC: number;
   dewpointF: number;
-
   feelsLikeC: number;
   feelsLikeF: number;
   windChillC: number;

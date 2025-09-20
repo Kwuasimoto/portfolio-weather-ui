@@ -13,6 +13,7 @@ export class MapFeature {
   private svgOverlay!: L.SVGOverlay;
   private map!: L.Map;
   private icon!: L.Icon<L.IconOptions>;
+  private marker!: L.Marker;
 
   constructor() {}
 
@@ -44,6 +45,10 @@ export class MapFeature {
     return this.id;
   }
 
+  getMarker() {
+    return this.marker;
+  }
+
   setIcon(icon: L.Icon<L.IconOptions>) {
     this.icon = icon;
   }
@@ -66,6 +71,10 @@ export class MapFeature {
 
   setMap(map: L.Map): void {
     this.map = map;
+  }
+
+  setMarker(marker: L.Marker) {
+    this.marker = marker;
   }
 
   /**

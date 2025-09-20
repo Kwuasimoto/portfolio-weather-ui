@@ -4,63 +4,63 @@ import {
   featureService,
   locationService,
   mapService,
-  svgService,
   weatherService,
 } from "@services";
-import { Component, onMount } from "solid-js";
-
-import L from "leaflet";
+import { Component, createEffect, createSignal, onMount } from "solid-js";
 import { useWeatherTooltip } from "@hooks";
-import { imgService } from "src/services/img-service";
 
 export const WeatherOverlay: Component = () => {
+  const [mounted, setMounted] = createSignal<boolean>(false);
   const { setWeatherTooltipMapFeature, getWeatherTooltipMapFeature } =
     useWeatherTooltip();
 
-  // Initial load, get all weather icons for current bounts.
+  // Initial load, get all weather icons for current bounds.
   onMount(async () => {
+    console.log("Running onMount");
     const map = mapService.getMap();
-    if (map)
+    if (map) {
       map.on("zoomend", () => {
         // svgService.onZoomEnd(map);
       });
 
-    //Fetch settlements,
-    //TODO: Should be moved to a CityOverlay eventually.
-    //TODO: Features should be built before this function, idk how we determine how many to build tho.
-    const mapFeatures = await locationService.getNearbySettlements();
+      //Fetch settlements,
+      //TODO: Should be moved to a CityOverlay eventually.
+      //TODO: Features should be built before this function, idk how we determine how many to build tho.
+      const mapFeatures = await locationService.getNearbySettlements();
 
-    // Add generated features to service
-    featureService.addMany(mapFeatures);
+      console.log(`onMount fetched ${mapFeatures.length} features`);
 
-    // Set map to the generated features.
-    mapFeatures.forEach((mapFeature) => mapFeature.setMap(map!));
+      // Add generated features to service
+      featureService.addMany(mapFeatures);
 
-    // Get weather data for settlements by their bounds.
-    await weatherService.getRealtimeWeatherForSettlements(mapFeatures);
+      // Set map to the generated features.
+      mapFeatures.forEach((mapFeature) => mapFeature.setMap(map!));
 
-    // Get icons from memory.
-    imgService.getWeatherIcons(mapFeatures);
+      // Get weather data for settlements by their bounds.
+      await weatherService.getRealtimeWeatherForSettlements(mapFeatures);
 
-    // loop mapFeatures to SVG Overlays and add to map.
-    mapFeatures.forEach((mapFeature) => {
-      // mapFeature should be populated with enough information at this point to set its internal ID.
-      mapFeature.setId();
+      // Create markers using centralized function
+      featureService.createMarkersOnMap(map, setWeatherTooltipMapFeature);
+    }
+    setMounted(true);
+  });
 
-      const settlement = mapFeature.getSettlement();
+  createEffect(() => {
+    if (!mounted()) return;
+    console.log("Running createEffect");
+    const map = mapService.getMap();
+    if (map) {
+      const features = featureService.getMapFeatures();
 
-      const marker = L.marker(settlement.bounds.getCenter(), {
-        icon: mapFeature.getIcon(),
-      });
+      if (features.length === 0) {
+        return;
+      }
 
-      marker.on("click", () => {
-        setWeatherTooltipMapFeature(mapFeature);
-        console.log("Tooltip state", getWeatherTooltipMapFeature());
-      });
+      console.log(`Updating markers for ${features.length} features`, features);
 
-      marker.addTo(map!);
-      console.log("Successfully added feature", mapFeature.json());
-    });
+      // Use the same centralized function to create markers
+      featureService.createMarkersOnMap(map, setWeatherTooltipMapFeature);
+    }
   });
 
   return <></>;

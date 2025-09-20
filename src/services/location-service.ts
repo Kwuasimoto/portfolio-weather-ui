@@ -219,6 +219,8 @@ class LocationService {
     const bounds = leafMap.getBounds();
     const zoom = leafMap.getZoom();
 
+    console.log(`Map bounds updated - Zoom: ${zoom}, North: ${bounds.getNorth().toFixed(4)}, South: ${bounds.getSouth().toFixed(4)}, East: ${bounds.getEast().toFixed(4)}, West: ${bounds.getWest().toFixed(4)}`);
+
     this.bounds[1]((prev) => ({
       ...prev,
       zoom,

@@ -25,7 +25,7 @@ export class WeatherService {
   }
 
   public async getRealtimeWeatherForSettlements(mapFeatures: MapFeature[]) {
-    return Promise.all(
+    return await Promise.all(
       mapFeatures.map((feature) =>
         weatherService.getRealtimeWeatherForSettlement(feature),
       ),

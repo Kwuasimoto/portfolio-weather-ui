@@ -1,18 +1,10 @@
 import { Map } from "@components";
 import { PermissionModal } from "@modals";
-import { locationService, svgService, weatherService } from "@services";
-import { createSignal, onMount } from "solid-js";
+import { featureService, locationService, weatherService } from "@services";
+import { createSignal } from "solid-js";
 
 export default function Home() {
-  const [count, setCount] = createSignal(0);
-  const [testIcon, setTestIcon] = createSignal<SVGSVGElement>();
   const [isLoading, setIsLoading] = createSignal(false);
-
-  onMount(async () => {
-    const icon = await svgService.lazyLoadWeatherIcon(1000, 0);
-    if (!icon) return;
-    setTestIcon(icon);
-  });
 
   const handleWeatherFetch = async () => {
     setIsLoading(true);
@@ -22,10 +14,13 @@ export default function Home() {
 
       if (settlements.length > 0) {
         // Fetch weather data for all settlements
-        await weatherService.getRealtimeWeatherForSettlements(settlements);
+        const realtimeWeather =
+          await weatherService.getRealtimeWeatherForSettlements(settlements);
         console.log(
           `Weather data fetched for ${settlements.length} settlements`,
         );
+
+        featureService.addMany(realtimeWeather);
       } else {
         console.log("No settlements found in current view");
       }

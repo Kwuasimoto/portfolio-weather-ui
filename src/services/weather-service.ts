@@ -8,7 +8,7 @@ import { MapFeature } from "src/wrappers";
 export class WeatherService {
   // move to .env before git commit
   private readonly APIKEY: string = import.meta.env.VITE_WEATHER_API || "";
-  private readonly API: string = "http://api.weatherapi.com/v1";
+  private readonly API: string = "https://api.weatherapi.com/v1";
 
   private static instance: WeatherService;
 

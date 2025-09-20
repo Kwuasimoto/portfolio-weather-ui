@@ -3,6 +3,7 @@ import { locationService, mapService, svgService } from "@services";
 
 import L from "leaflet";
 import { WeatherOverlay } from "@overlays";
+import { WeatherTooltip } from "./weather-tooltip";
 
 export const Map: Component = () => {
   let mapRef: HTMLDivElement | undefined;
@@ -53,6 +54,7 @@ export const Map: Component = () => {
   return (
     <>
       <div class="stretched z-0" ref={mapRef} />
+      <WeatherTooltip />
       <WeatherOverlay />
     </>
   );

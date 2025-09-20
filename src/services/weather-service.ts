@@ -1,10 +1,8 @@
 import {
   RealtimeWeather,
   RealtimeWeatherRaw,
-  Settlement,
   WeatherAPIResponse,
 } from "@types";
-import L from "leaflet";
 import { MapFeature } from "src/wrappers";
 
 export class WeatherService {
@@ -40,6 +38,8 @@ export class WeatherService {
       const response = await fetch(url);
       const result = await response.json();
 
+      console.log("Weather response", result);
+
       const weatherParsed = this.parseRealtimeWeatherRaw(result);
       mapFeature.setWeather(weatherParsed);
 
@@ -59,6 +59,9 @@ export class WeatherService {
     return {
       cloud: raw.current.cloud,
       conditionCode: raw.current.condition.code,
+      condition: raw.current.condition.text,
+      icon: raw.current.condition.icon,
+
       tempC: raw.current.temp_c,
       tempF: raw.current.temp_f,
       feelsLikeC: raw.current.feelslike_c,

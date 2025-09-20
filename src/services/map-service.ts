@@ -3,6 +3,7 @@ import { createSignal, Signal } from "solid-js";
 
 class MapService {
   private map: Signal<L.Map | undefined> = createSignal();
+
   private static instance: MapService;
 
   private constructor() {}

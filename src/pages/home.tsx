@@ -33,7 +33,7 @@ export default function Home() {
         />
       )}
 
-      <Map />
+      {locationService.hasRequested() && <Map />}
     </section>
   );
 }

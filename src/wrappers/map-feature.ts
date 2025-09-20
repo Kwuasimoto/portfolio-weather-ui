@@ -6,13 +6,19 @@ import L from "leaflet";
  */
 export class MapFeature {
   private id!: string;
-  private svg!: SVGSVGElement;
-  private svgOverlay!: L.SVGOverlay;
   private weather!: RealtimeWeather;
   private settlement!: Settlement;
+
+  private svg!: SVGSVGElement;
+  private svgOverlay!: L.SVGOverlay;
   private map!: L.Map;
+  private icon!: L.Icon<L.IconOptions>;
 
   constructor() {}
+
+  getIcon() {
+    return this.icon;
+  }
 
   getSVG() {
     return this.svg;
@@ -36,6 +42,10 @@ export class MapFeature {
 
   getId() {
     return this.id;
+  }
+
+  setIcon(icon: L.Icon<L.IconOptions>) {
+    this.icon = icon;
   }
 
   setSVG(svg: SVGSVGElement) {
@@ -62,15 +72,21 @@ export class MapFeature {
    * Creates ID based on weather icon code, and settlement name.
    */
   setId() {
-    return `${this.settlement.name}_${this.weather.conditionCode}_${this.weather.isDay}`;
+    const settlementNameNormalized = this.settlement.name
+      .toLowerCase()
+      .split(" ")
+      .join("_");
+    this.id = `${settlementNameNormalized}_${this.weather.conditionCode}_${this.weather.isDay}`;
   }
 
   json() {
     return {
+      id: this.getId(),
       svg: this.svg,
       svgOverlay: this.svgOverlay,
       weather: this.weather,
       settlement: this.settlement,
+      icon: this.icon,
     };
   }
 }

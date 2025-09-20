@@ -300,8 +300,6 @@ class LocationService {
       ),
       class: settlementRaw.class,
       importance: settlementRaw.importance,
-      lat: Number.parseFloat(settlementRaw.lat),
-      lng: Number.parseFloat(settlementRaw.lng),
       liscense: settlementRaw.liscense,
       name: settlementRaw.name,
       placeId: settlementRaw.place_id,

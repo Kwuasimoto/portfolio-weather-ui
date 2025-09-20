@@ -1,7 +1,7 @@
 import { Defaults } from "@enums";
-import { SVGContrastBooster } from "@util";
 import L from "leaflet";
 import { MapFeature } from "src/wrappers";
+import { featureService } from "./feature-service";
 
 class SVGService {
   private static instance: SVGService;
@@ -147,6 +147,10 @@ class SVGService {
     }
 
     const svg = this.svgMap.get(id);
+    // Enable pointer events
+    if (svg) svg.style.pointerEvents = "auto";
+    // svg.style.zIndex = 50;
+
     if (!svg) {
       throw new Error(`Preloaded svg for id ${id} is undefined.`);
     }
@@ -164,16 +168,33 @@ class SVGService {
   public onZoomEnd(map: L.Map) {
     const zoom = map.getZoom();
 
+    if (zoom < 7 || zoom > 14) {
+      for (const feature of featureService.getMapFeatures()) {
+        const svgOverlay = feature.getSVGOverlay();
+        const element = svgOverlay.getElement();
+        if (element) {
+          element.style.display = "none";
+        }
+      }
+      return;
+    }
+
     const sizeFactor = 0.02;
     const offsetLatFactor = 0.01;
 
     const zoomDelta = this.zoomMax - zoom + 1;
+    const size = sizeFactor * zoomDelta ** 1.3;
 
-    const size = sizeFactor * zoomDelta ** 1.2;
-    const northOffset = offsetLatFactor * (zoomDelta - 0.1) ** 1.175;
+    const offsetBoost = zoom <= 9 ? 0.0025 : 0;
+    const northOffset = (offsetLatFactor + offsetBoost) * zoomDelta ** 1.175;
 
-    for (const [id, svgOverlay] of this.svgOverlayMap.entries()) {
-      const initialBounds = this.originalCentersMap.get(id);
+    console.log("Current zoom", zoom);
+    console.log("Current offset", northOffset);
+
+    for (const feature of featureService.getMapFeatures()) {
+      const svgOverlay = feature.getSVGOverlay();
+
+      const initialBounds = this.originalCentersMap.get(feature.getId());
 
       if (!initialBounds) {
         console.error("Failed to find initial bounds", svgOverlay);
@@ -188,6 +209,9 @@ class SVGService {
         [initialBounds.lat + size / 2, initialBounds.lng + size / 2], // SE
       );
 
+      const element = svgOverlay.getElement();
+      if (element) element.style.display = "";
+
       svgOverlay.setBounds(bounds);
     }
   }
@@ -195,9 +219,30 @@ class SVGService {
   public createInitialBounds(mapFeature: MapFeature) {
     const settlement = mapFeature.getSettlement();
     const zoom = mapFeature.getMap().getZoom();
-
     const center = settlement.bounds.getCenter();
+
+    console.log("Setting center", mapFeature.getId());
     this.originalCentersMap.set(mapFeature.getId(), center);
+
+    // Hide icon if outside zoom bounds (6-14)
+    const svgOverlay = mapFeature.getSVGOverlay();
+    if (zoom < 6 || zoom > 14) {
+      if (svgOverlay && svgOverlay.getElement()) {
+        const element = svgOverlay.getElement();
+        if (element) {
+          element.style.display = "none";
+        }
+      }
+      // Still return bounds for consistency, but they won't be visible
+    } else {
+      // Show icon if within zoom bounds
+      if (svgOverlay && svgOverlay.getElement()) {
+        const element = svgOverlay.getElement();
+        if (element) {
+          element.style.display = "";
+        }
+      }
+    }
 
     // create an offset
     const sizeFactor = 0.02;
@@ -205,8 +250,11 @@ class SVGService {
 
     const zoomDelta = this.zoomMax - zoom + 1;
 
-    const size = sizeFactor * zoomDelta ** 1.2;
-    const northOffset = offsetLatFactor * (zoomDelta - 0.1) ** 1.175;
+    const size = sizeFactor * zoomDelta ** 1.3;
+    const offsetBoost = zoom < 8 ? 0.05 : 0;
+    const northOffset = (offsetLatFactor + offsetBoost) * zoomDelta ** 1.175;
+    console.log("Current zoom", zoom);
+    console.log("Current offset", northOffset);
 
     const bounds = L.latLngBounds(
       [center.lat + northOffset - size / 2, center.lng - size / 2], // NW

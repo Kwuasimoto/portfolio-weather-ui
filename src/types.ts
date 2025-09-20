@@ -63,9 +63,6 @@ export interface SettlementRaw {
   display_name: string;
   importance: number;
 
-  lat: string;
-  lng: string;
-
   liscense: string;
 
   name: string;
@@ -83,13 +80,9 @@ export type Settlement = {
   address: SettlementAddress;
   bounds: L.LatLngBounds;
   placeId: number;
-  lat: number;
-  lng: number;
   type: SettlementType;
 } & Omit<
   SettlementRaw,
-  | "lat"
-  | "lng"
   | "address"
   | "addressType"
   | "boundingbox"
@@ -106,6 +99,7 @@ export interface WeatherAPIResponse<T> {
 }
 
 export interface RealtimeWeatherCurrentRaw {
+  icon: string;
   code: number;
   text: string;
 }
@@ -140,9 +134,11 @@ export type RealtimeWeather = {
   heatIndexC: number;
   heatIndexF: number;
   conditionCode: number;
+  condition: string;
   windMPH: number;
   windKPH: number;
   isDay: number;
+  icon: string; //CDN
 } & Omit<
   RealtimeWeatherRaw,
   | "last_updated"
